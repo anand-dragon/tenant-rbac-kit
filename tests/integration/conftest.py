@@ -7,6 +7,7 @@ wrong issuer) pass tests while failing for real users, exactly the kind of
 gap that should not exist in code meant to be copied into other projects.
 """
 
+import json
 import os
 import subprocess
 import time
@@ -30,57 +31,69 @@ def postgres_container() -> Iterator[PostgresContainer]:
         yield container
 
 
-def _wait_for_realm(url: str, timeout: float = 120) -> None:
-    """Poll the realm's discovery endpoint directly rather than matching a
-    log line. Keycloak's JVM logging interleaves stdout/stderr with enough
-    buffering jitter that a "server started" line can be observed before a
-    slightly-earlier "realm imported" line actually flushes, so log-order
-    matching is racy for import completion. Polling the real endpoint checks
-    the actual condition the tests depend on.
-
-    The generous timeout is deliberate: when a second dynamically-published
-    container's port comes up shortly after another (Postgres, here), some
-    Docker Desktop networking setups take several seconds, occasionally
-    longer, to route traffic to it correctly, and every attempt in that
-    window fails as a connection reset rather than a refusal. That is an
-    environment characteristic, not an application bug, confirmed by the
-    same container's own logs showing a clean boot and realm import in
-    under five seconds every time.
-    """
+def _wait_reachable(url: str, timeout: float = 60) -> None:
     deadline = time.monotonic() + timeout
     last_error: Exception | None = None
     while time.monotonic() < deadline:
         try:
-            response = httpx.get(f"{url}/realms/tenant-rbac-kit/.well-known/openid-configuration")
-            if response.status_code == 200:
+            response = httpx.get(url)
+            if response.status_code < 500:
                 return
         except httpx.TransportError as exc:
             last_error = exc
         time.sleep(1)
-    raise TimeoutError(f"tenant-rbac-kit realm not ready after {timeout}s") from last_error
+    raise TimeoutError(f"{url} not reachable after {timeout}s") from last_error
+
+
+def _import_realm(url: str) -> None:
+    """Import the realm via Keycloak's admin REST API rather than baking it
+    in at container launch (--import-realm + a bind-mounted file).
+
+    Bind-mounting a single file is a footgun: if the host path is ever
+    wrong, Docker silently creates an empty directory there instead of
+    failing, and the container ends up with a directory where a file was
+    expected, no clear error anywhere. Importing over HTTP after the
+    container is already confirmed reachable has no host-path dependency
+    to get wrong in the first place.
+    """
+    realm_path = Path(__file__).parent.parent.parent / "keycloak" / "realm-export.json"
+    realm = json.loads(realm_path.read_text())
+
+    token_response = httpx.post(
+        f"{url}/realms/master/protocol/openid-connect/token",
+        data={
+            "grant_type": "password",
+            "client_id": "admin-cli",
+            "username": "admin",
+            "password": "admin",
+        },
+    )
+    token_response.raise_for_status()
+    admin_token = token_response.json()["access_token"]
+
+    response = httpx.post(
+        f"{url}/admin/realms",
+        json=realm,
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    response.raise_for_status()
 
 
 @pytest.fixture(scope="session")
 def keycloak_container() -> Iterator[DockerContainer]:
-    realm_export = str((Path(__file__).parent.parent / "keycloak" / "realm-export.json").resolve())
     container = (
         DockerContainer("quay.io/keycloak/keycloak:26.0")
         .with_env("KEYCLOAK_ADMIN", "admin")
         .with_env("KEYCLOAK_ADMIN_PASSWORD", "admin")
-        .with_command(["start-dev", "--import-realm"])
-        .with_volume_mapping(realm_export, "/opt/keycloak/data/import/realm-export.json", "ro")
+        .with_command(["start-dev"])
         .with_exposed_ports(8080)
     )
     with container:
         host = container.get_container_host_ip()
         port = container.get_exposed_port(8080)
-        try:
-            _wait_for_realm(f"http://{host}:{port}")
-        except TimeoutError:
-            print("=== keycloak container logs on timeout ===", flush=True)
-            print(container.get_logs()[0].decode(errors="replace"), flush=True)
-            print(container.get_logs()[1].decode(errors="replace"), flush=True)
-            raise
+        url = f"http://{host}:{port}"
+        _wait_reachable(url)
+        _import_realm(url)
         yield container
 
 
