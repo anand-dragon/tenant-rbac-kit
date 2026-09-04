@@ -5,7 +5,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from tenant_rbac_kit.auth.jwt import verify_token
 from tenant_rbac_kit.auth.schemas import TokenClaims
 
-_bearer_scheme = HTTPBearer(auto_error=True)
+_bearer_scheme = HTTPBearer()
 
 
 def get_current_claims(

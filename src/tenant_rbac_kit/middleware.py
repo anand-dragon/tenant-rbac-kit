@@ -10,13 +10,9 @@ CORRELATION_ID_HEADER = "X-Request-ID"
 
 
 class CorrelationIdMiddleware(BaseHTTPMiddleware):
-    """Assigns a correlation id per request and binds it into structlog's
-    contextvars, so every log emitted while handling the request carries it
-    automatically, no need to thread it through every function call.
-
-    Reuses an inbound X-Request-ID if the caller (or an upstream proxy) set
-    one, otherwise generates one, and always echoes it back on the response
-    so a caller can correlate their own logs with the API's.
+    """Binds a correlation id (reusing an inbound X-Request-ID, or generating
+    one) into structlog's contextvars for the request, and echoes it back on
+    the response.
     """
 
     async def dispatch(

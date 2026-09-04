@@ -1,9 +1,5 @@
-"""One-off script that seeds example Casbin policies for the demo users
-defined in keycloak/realm-export.json (alice/tenant-a, bob/tenant-b).
-
-Run via `make seed-roles`. Not part of the request-serving app, so it talks
-to the enforcer synchronously rather than through the asyncio.to_thread
-wrappers in rbac/enforcer.py.
+"""One-off script (run via `make seed-roles`) that seeds Casbin policies for
+the demo users in keycloak/realm-export.json (alice/tenant-a, bob/tenant-b).
 """
 
 from tenant_rbac_kit.rbac.enforcer import get_enforcer

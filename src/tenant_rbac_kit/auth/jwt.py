@@ -33,8 +33,4 @@ def verify_token(token: str) -> TokenClaims:
         issuer=f"{settings.keycloak_server_url}/realms/{settings.keycloak_realm}",
     )
 
-    return TokenClaims(
-        sub=payload["sub"],
-        tenant_id=payload["tenant_id"],
-        preferred_username=payload.get("preferred_username"),
-    )
+    return TokenClaims(sub=payload["sub"], tenant_id=payload["tenant_id"])

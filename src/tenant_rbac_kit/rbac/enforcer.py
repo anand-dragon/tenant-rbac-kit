@@ -9,13 +9,8 @@ from tenant_rbac_kit.config import get_settings
 
 @lru_cache
 def get_enforcer() -> casbin.Enforcer:
-    """Build the process-wide Casbin enforcer.
-
-    Casbin loads all policies into memory on construction. enforce() calls
-    afterwards are pure in-memory checks, no DB round trip per request, so
-    the enforcer itself can stay synchronous without blocking the event
-    loop on the hot path. Only policy writes touch the DB, see grant_role
-    and revoke_role below, which are pushed to a thread.
+    """Casbin caches all policies in memory, so enforce() never blocks on the
+    DB; only writes (grant_role/revoke_role below) do, via asyncio.to_thread.
     """
     settings = get_settings()
     # psycopg3 supports both sync and async through the same dialect URL,

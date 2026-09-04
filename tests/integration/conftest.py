@@ -1,10 +1,6 @@
-"""Integration test fixtures.
-
-These tests run against real Postgres and Keycloak containers, not mocks.
-This is an auth/RBAC reference kit, mocking JWT verification would let a
-broken Keycloak realm config (wrong audience, missing tenant_id mapper,
-wrong issuer) pass tests while failing for real users, exactly the kind of
-gap that should not exist in code meant to be copied into other projects.
+"""Integration test fixtures: real Postgres and Keycloak containers, not
+mocks, since mocking JWT verification would let a broken Keycloak realm
+config pass tests while failing for real users.
 """
 
 import json
@@ -20,9 +16,6 @@ from testcontainers.community.postgres import PostgresContainer
 from testcontainers.core.container import DockerContainer
 
 from tenant_rbac_kit.config import get_settings
-
-ALICE_SUB = "11111111-1111-1111-1111-111111111111"
-BOB_SUB = "22222222-2222-2222-2222-222222222222"
 
 
 @pytest.fixture(scope="session")
@@ -46,15 +39,9 @@ def _wait_reachable(url: str, timeout: float = 60) -> None:
 
 
 def _import_realm(url: str) -> None:
-    """Import the realm via Keycloak's admin REST API rather than baking it
-    in at container launch (--import-realm + a bind-mounted file).
-
-    Bind-mounting a single file is a footgun: if the host path is ever
-    wrong, Docker silently creates an empty directory there instead of
-    failing, and the container ends up with a directory where a file was
-    expected, no clear error anywhere. Importing over HTTP after the
-    container is already confirmed reachable has no host-path dependency
-    to get wrong in the first place.
+    """Imports via Keycloak's admin REST API instead of a launch-time bind
+    mount: a wrong host path there silently gets Docker to mount an empty
+    directory instead of failing, exactly what happened here once.
     """
     realm_path = Path(__file__).parent.parent.parent / "keycloak" / "realm-export.json"
     realm = json.loads(realm_path.read_text())
@@ -122,17 +109,11 @@ def run_migrations(configure_settings: None) -> None:
 
 @pytest.fixture(scope="session")
 def seed_roles(run_migrations: None) -> None:
+    from tenant_rbac_kit import seed_roles as seed_roles_script
     from tenant_rbac_kit.rbac.enforcer import get_enforcer
 
     get_enforcer.cache_clear()
-    enforcer = get_enforcer()
-    enforcer.add_policy("admin", "tenant-a", "invoices", "read")
-    enforcer.add_policy("admin", "tenant-a", "invoices", "create")
-    enforcer.add_policy("admin", "tenant-a", "invoices", "delete")
-    enforcer.add_role_for_user_in_domain(ALICE_SUB, "admin", "tenant-a")
-
-    enforcer.add_policy("viewer", "tenant-b", "invoices", "read")
-    enforcer.add_role_for_user_in_domain(BOB_SUB, "viewer", "tenant-b")
+    seed_roles_script.main()
 
 
 async def _password_grant(keycloak_url: str, username: str, password: str) -> str:

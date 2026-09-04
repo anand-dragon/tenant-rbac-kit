@@ -1,5 +1,7 @@
 # tenant-rbac-kit
 
+[![ci](https://github.com/anand-dragon/tenant-rbac-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/anand-dragon/tenant-rbac-kit/actions/workflows/ci.yml)
+
 A reference implementation for multi-tenant RBAC in FastAPI: Keycloak handles
 authentication and tenant identity, Casbin handles authorization. Clone it,
 delete the demo `invoices` resource, wire `require_permission` into your own
