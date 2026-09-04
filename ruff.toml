@@ -1,0 +1,12 @@
+line-length = 100
+target-version = "py313"
+src = ["src", "tests"]
+
+[lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "ASYNC"]
+
+[lint.flake8-bugbear]
+# FastAPI's DI pattern calls Depends()/Security() in argument defaults by
+# design, this tells B008 those specific calls are not the mutable-default
+# footgun the rule exists to catch.
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Security"]

@@ -1,0 +1,38 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# tooling caches
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# env / secrets
+.env
+.env.*
+!.env.example
+
+# editors
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+
+# AI coding agents
+.claude/
+.claude.json
+CLAUDE.local.md
+.cursor/
+.cursorrules
+.windsurf/
+.windsurfrules
+.aider*
+.copilot/
+.codeium/
+.continue/
