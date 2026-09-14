@@ -19,4 +19,4 @@ RUN uv sync --no-dev && chown -R app:app /app
 USER app
 
 EXPOSE 8000
-CMD ["uv", "run", "uvicorn", "tenant_rbac_kit.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uv", "run", "granian", "--interface", "asgi", "--host", "0.0.0.0", "--port", "8000", "tenant_rbac_kit.main:app"]
