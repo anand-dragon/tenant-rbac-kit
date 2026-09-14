@@ -2,15 +2,15 @@ services:
   postgres:
     image: postgres:17-alpine
     environment:
-      POSTGRES_USER: tenant_rbac
-      POSTGRES_PASSWORD: tenant_rbac
-      POSTGRES_DB: tenant_rbac
+      POSTGRES_USER: ${POSTGRES_USER:?set in deploy/.env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in deploy/.env}
+      POSTGRES_DB: ${POSTGRES_DB:?set in deploy/.env}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U tenant_rbac"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -19,8 +19,8 @@ services:
     image: quay.io/keycloak/keycloak:26.0
     command: ["start-dev", "--import-realm"]
     environment:
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:?set in deploy/.env}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?set in deploy/.env}
       # Pin the token issuer so it is the same whether the token endpoint is
       # reached via the host port or the compose network.
       KC_HOSTNAME: http://localhost:8080
@@ -39,7 +39,7 @@ services:
       context: ..
       dockerfile: deploy/Dockerfile
     environment:
-      DATABASE_URL: postgresql+psycopg://tenant_rbac:tenant_rbac@postgres:5432/tenant_rbac
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       KEYCLOAK_SERVER_URL: http://keycloak:8080
       KEYCLOAK_ISSUER_URL: http://localhost:8080
     ports:
