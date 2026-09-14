@@ -3,6 +3,7 @@ COMPOSE = docker compose -f deploy/docker-compose.yml
 .PHONY: up down logs migrate seed-roles test lint typecheck fmt
 
 up:
+	@test -f deploy/.env || cp deploy/.env.example deploy/.env
 	$(COMPOSE) up -d --build
 	@echo "waiting for services..."
 	@sleep 5
