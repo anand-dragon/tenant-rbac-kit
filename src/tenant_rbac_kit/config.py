@@ -7,6 +7,10 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
     database_url: str = "postgresql+psycopg://tenant_rbac:tenant_rbac@localhost:5432/tenant_rbac"
+    # Per worker process. Keep workers * (pool_size + max_overflow) below
+    # Postgres max_connections (100 by default).
+    db_pool_size: int = 5
+    db_max_overflow: int = 10
 
     keycloak_server_url: str = "http://localhost:8080"
     # Issuer as it appears in tokens. Differs from server_url when the API

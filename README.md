@@ -110,6 +110,26 @@ TOKEN=$(curl -s -X POST \
 curl -H "Authorization: Bearer $TOKEN" http://localhost:8000/invoices
 ```
 
+### Sizing workers and the connection pool
+
+Every request does an RS256 signature check and a Casbin `enforce()` in
+Python, so a single uvicorn worker saturates one core at roughly 700 rps
+while Postgres idles. Run several workers and keep the total connection
+budget under Postgres' `max_connections` (100 by default):
+
+```
+WEB_CONCURRENCY * (DB_POOL_SIZE + DB_MAX_OVERFLOW) < max_connections
+```
+
+Compose ships `WEB_CONCURRENCY=4` with the default pool of `5 + 10` per
+worker, 60 connections. Measured on `GET /invoices`, 64 concurrent
+connections (`scripts/bench.sh`):
+
+| workers | RPS | p50 | p99 |
+|---|---|---|---|
+| 1 | 723 | 85 ms | 267 ms |
+| 4 | 1830 | 32 ms | 62 ms |
+
 ## Testing philosophy
 
 This is auth/RBAC code meant to be copied into other projects. Mocking JWT
