@@ -30,7 +30,7 @@ def verify_token(token: str) -> TokenClaims:
         signing_key.key,
         algorithms=["RS256"],
         audience=settings.keycloak_audience,
-        issuer=f"{settings.keycloak_server_url}/realms/{settings.keycloak_realm}",
+        issuer=settings.keycloak_issuer,
     )
 
     return TokenClaims(sub=payload["sub"], tenant_id=payload["tenant_id"])

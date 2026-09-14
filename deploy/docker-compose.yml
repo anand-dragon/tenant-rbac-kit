@@ -21,6 +21,9 @@ services:
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
+      # Pin the token issuer so it is the same whether the token endpoint is
+      # reached via the host port or the compose network.
+      KC_HOSTNAME: http://localhost:8080
     ports:
       - "8080:8080"
     volumes:
@@ -38,6 +41,7 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://tenant_rbac:tenant_rbac@postgres:5432/tenant_rbac
       KEYCLOAK_SERVER_URL: http://keycloak:8080
+      KEYCLOAK_ISSUER_URL: http://localhost:8080
     ports:
       - "8000:8000"
     depends_on:
