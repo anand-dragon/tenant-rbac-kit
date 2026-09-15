@@ -19,4 +19,5 @@ RUN uv sync --no-dev && chown -R app:app /app
 USER app
 
 EXPOSE 8000
+# Worker count comes from WEB_CONCURRENCY (uvicorn reads it natively).
 CMD ["uv", "run", "uvicorn", "tenant_rbac_kit.main:app", "--host", "0.0.0.0", "--port", "8000"]

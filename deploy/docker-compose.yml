@@ -42,6 +42,8 @@ services:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       KEYCLOAK_SERVER_URL: http://keycloak:8080
       KEYCLOAK_ISSUER_URL: http://localhost:8080
+      # 4 workers x (DB_POOL_SIZE + DB_MAX_OVERFLOW) = 60 connections, under Postgres' default 100.
+      WEB_CONCURRENCY: 4
     ports:
       - "8000:8000"
     depends_on:
