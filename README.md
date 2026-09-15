@@ -1,6 +1,6 @@
 # tenant-rbac-kit
 
-[![ci](https://github.com/anand-dragon/tenant-rbac-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/anand-dragon/tenant-rbac-kit/actions/workflows/ci.yml)
+[![lint-and-test](https://github.com/anand-dragon/tenant-rbac-kit/actions/workflows/lint-and-test.yml/badge.svg)](https://github.com/anand-dragon/tenant-rbac-kit/actions/workflows/lint-and-test.yml)
 
 A reference implementation for multi-tenant RBAC in FastAPI: Keycloak handles
 authentication and tenant identity, Casbin handles authorization. Clone it,
